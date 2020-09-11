@@ -1,0 +1,113 @@
+﻿@page "/Recipes/Delete/{Id:int}"
+
+@attribute [Authorize]
+@inject RecipeService RecipeService
+
+@if (CanEdit)
+{
+    <EditForm Model="@recipe" OnSubmit="@SubmitAsync">
+        <div class="d-xl-inline-block">
+            <h1>Are you sure you want to delete this recipe?</h1>
+        </div>
+        <div class="float-xl-right">
+            <div class="btn-group">
+                <button type="submit" class="d-none" disabled></button>
+                <button type="submit" class="btn btn-danger">Delete</button>
+                <NavLink href="@($"Recipes/Read/{Id}")" class="btn btn-light">Go Back</NavLink>
+            </div>
+        </div>
+    </EditForm>
+
+    <table class="table">
+        <tr>
+            <th>Name</th>
+            <td>@recipe.Name</td>
+        </tr>
+        <tr>
+            <th>Ingredients</th>
+            <td>
+                <ul>
+                    @foreach (Ingredient ingredient in recipe.Ingredients)
+                    {
+                        <li>@ingredient.Name (@ingredient.Quantity)</li>
+                    }
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <th>Directions</th>
+            <td>
+                <ol>
+                    @foreach (Direction direction in recipe.Directions.OrderBy(d => d.Step))
+                    {
+                        <li>@direction.Description</li>
+                    }
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <th>Prep Time</th>
+            <td>@recipe.PrepTime</td>
+        </tr>
+        <tr>
+            <th>Cook Time</th>
+            <td>@recipe.CookTime</td>
+        </tr>
+        <tr>
+            <th>Servings</th>
+            <td>@recipe.Servings</td>
+        </tr>
+        <tr>
+            <th>Created By</th>
+            <td>@recipe.Owner</td>
+        </tr>
+        @if (recipe.Restricted)
+        {
+            <tr>
+                <th>Permitted Users</th>
+                <td>
+                    <ul>
+                        @foreach (User user in recipe.Users)
+                        {
+                            @if (user.Editor)
+                            {
+                                <li>@user.Email (Edit Access)</li>
+                            }
+                            else
+                            {
+                                <li>@user.Email</li>
+                            }
+                        }
+                    </ul>
+                </td>
+            </tr>
+        }
+    </table>
+}
+else
+{
+    <p>Not authorized</p>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private bool CanEdit = false;
+
+    private Recipe recipe = new Recipe();
+
+    protected override async Task OnInitializedAsync()
+    {
+        recipe = await RecipeService.GetAsync(Id);
+        AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        string user = authState.User.Identity.Name;
+        CanEdit = user == recipe.Owner || recipe.Users.Where(u => u.Editor).Any(u => user == u.Email);
+    }
+
+    public async Task SubmitAsync()
+    {
+        await RecipeService.DeleteAsync(recipe);
+        NavigationManager.NavigateTo($"/Recipes");
+    }
+}

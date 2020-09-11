@@ -1,0 +1,21 @@
+﻿@inherits LayoutComponentBase
+
+<div class="sidebar">
+    <NavMenu />
+</div>
+
+<div class="main">
+    <div class="top-row px-4 auth">
+        <LoginDisplay />
+    </div>
+
+    <div class="content px-4">
+        @Body
+    </div>
+
+    <footer class="fixed-bottom py-3 bg-dark">
+        <div class="container font-small text-center text-white-50">
+            © 2020 Copyright: Recipe Binder - Developed and Maintained by Jawaad Salahuddin
+        </div>
+    </footer>
+</div>

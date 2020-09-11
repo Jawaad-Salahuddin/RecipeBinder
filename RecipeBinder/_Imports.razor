@@ -1,0 +1,18 @@
+﻿@using System.Net.Http
+@using System.Timers
+@using System.Collections.Generic
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.JSInterop
+@using RecipeBinder
+@using RecipeBinder.Data.Models
+@using RecipeBinder.Data.Services
+@using RecipeBinder.Helpers
+@using RecipeBinder.Shared
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<IdentityUser> UserManager

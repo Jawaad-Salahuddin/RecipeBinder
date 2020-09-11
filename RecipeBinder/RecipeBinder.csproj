@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UserSecretsId>aspnet-RecipeBinder-12CBF06B-72A5-4B75-B47C-EA8A138294BF</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Data\Migrations\20200828194434_Initial.cs" />
+    <Compile Remove="Data\Migrations\20200828194434_Initial.Designer.cs" />
+    <Compile Remove="Data\Migrations\20200901163922_Initial.cs" />
+    <Compile Remove="Data\Migrations\20200901163922_Initial.Designer.cs" />
+    <Compile Remove="Data\Migrations\20200903183800_Initial.cs" />
+    <Compile Remove="Data\Migrations\20200903183800_Initial.Designer.cs" />
+    <Compile Remove="Data\Migrations\20200903194311_Initial.cs" />
+    <Compile Remove="Data\Migrations\20200903194311_Initial.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="3.1.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="3.1.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="3.1.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="3.1.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

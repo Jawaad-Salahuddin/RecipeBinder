@@ -1,0 +1,21 @@
+﻿@page "/Recipes/Create"
+
+@attribute [Authorize]
+
+<_RecipeForm recipe="recipe" link="@($"Recipes")" operation="Create"></_RecipeForm>
+
+@code {
+    private Recipe recipe = new Recipe
+    {
+        Ingredients = new List<Ingredient>(),
+        Directions = new List<Direction>(),
+        RecipeCategories = new List<RecipeCategory>(),
+        Users = new List<User>()
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        recipe.Owner = authState.User.Identity.Name;
+    }
+}

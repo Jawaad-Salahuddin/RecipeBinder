@@ -1,0 +1,87 @@
+﻿@inject RecipeService RecipeService
+
+@if (recipes == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <input @bind-value="search" @bind-value:event="oninput" @onkeyup="EnterRecipe" type="search" class="form-control" placeholder="Search" />
+    if (categories.Count() > 0)
+    {
+        <label>Filter by categories: </label>
+        @foreach (Category category in categories)
+        {
+            <span class="badge badge-pill badge-dark">@category.Name</span>
+            <a @onclick="(() => RemoveCategoryAsync(category))">🗙</a>
+        }
+    }
+    <table class="table table-striped mt-xl-3">
+        @foreach (Recipe recipe in recipes)
+        {
+            <tr>
+                <td>
+                    <NavLink href="@($"Recipes/Read/{recipe.Id}")">@recipe.Name</NavLink>
+                </td>
+                <td>
+                    @foreach (RecipeCategory recipeCategory in recipe.RecipeCategories)
+                    {
+                        <a @onclick="(() => AddCategoryAsync(recipeCategory.Category))" class="badge badge-pill badge-dark text-white">@recipeCategory.Category.Name</a>
+                    }
+                </td>
+            </tr>
+        }
+    </table>
+}
+
+@code {
+    [Parameter]
+    public string user { get; set; }
+
+    private List<Recipe> recipes = new List<Recipe>();
+
+    private List<Category> categories = new List<Category>();
+
+    public string search = string.Empty;
+
+    private Timer timer = new Timer
+    {
+        Interval = 250,
+        AutoReset = false
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        timer.Elapsed += Elapsed;
+        await FetchRecipesAsync();
+    }
+
+    public void EnterRecipe()
+    {
+        timer.Stop();
+        timer.Start();
+    }
+
+    public async Task AddCategoryAsync(Category category)
+    {
+        categories.Add(category);
+        await FetchRecipesAsync();
+    }
+
+    public async Task RemoveCategoryAsync(Category category)
+    {
+        categories.Remove(category);
+        await FetchRecipesAsync();
+    }
+
+    public async Task FetchRecipesAsync()
+    {
+        recipes = await RecipeService.FetchAsync(search, user, categories);
+        StateHasChanged();
+    }
+
+    public void Elapsed(Object source, ElapsedEventArgs args)
+    {
+        InvokeAsync(async () => await FetchRecipesAsync());
+    }
+}

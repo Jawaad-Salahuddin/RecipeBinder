@@ -1,0 +1,30 @@
+﻿@page "/Recipes/Update/{Id:int}"
+
+@attribute [Authorize]
+@inject RecipeService RecipeService
+
+@if (CanEdit)
+{
+    <_RecipeForm recipe="recipe" link="@($"Recipes/Read/{Id}")" operation="Update"></_RecipeForm>
+}
+else
+{
+    <p>Not authorized</p>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private bool CanEdit = false;
+
+    private Recipe recipe = new Recipe();
+
+    protected override async Task OnInitializedAsync()
+    {
+        recipe = await RecipeService.GetAsync(Id);
+        AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        string user = authState.User.Identity.Name;
+        CanEdit = user == recipe.Owner || recipe.Users.Where(u => u.Editor).Any(u => user == u.Email);
+    }
+}

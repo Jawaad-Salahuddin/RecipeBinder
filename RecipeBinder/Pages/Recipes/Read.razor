@@ -1,0 +1,92 @@
+﻿@page "/Recipes/Read/{Id:int}"
+
+@inject RecipeService RecipeService
+
+@if (CanView)
+{
+    <div class="d-xl-inline-block">
+        <h1>@recipe.Name</h1>
+    </div>
+    @if (CanEdit)
+    {
+        <div class="float-xl-right">
+            <div class="btn-group">
+                <NavLink href="@($"Recipes/Update/{Id}")" class="btn btn-warning"><span class="oi oi-pencil"></span> Edit</NavLink>
+                <NavLink href="@($"Recipes/Delete/{Id}")" class="btn btn-danger"><span class="oi oi-trash"></span> Delete</NavLink>
+            </div>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-xl-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="d-flex justify-content-center">General</h5>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li><strong>Prep Time:</strong> @recipe.PrepTime</li>
+                        <li><strong>Cook Time:</strong> @recipe.CookTime</li>
+                        <li><strong>Servings:</strong> @recipe.Servings</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="d-flex justify-content-center">Ingredients</h5>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        @foreach (Ingredient ingredient in recipe.Ingredients)
+                        {
+                            <li>@ingredient.Name (@ingredient.Quantity)</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="d-flex justify-content-center">Directions</h5>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        @foreach (Direction direction in recipe.Directions.OrderBy(d => d.Step))
+                        {
+                            <li>@direction.Description</li>
+                        }
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <p>Not authorized</p>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private bool CanView = false;
+
+    private bool CanEdit = false;
+
+    private Recipe recipe = new Recipe();
+
+    protected override async Task OnInitializedAsync()
+    {
+        recipe = await RecipeService.GetAsync(Id);
+        AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        string user = authState.User.Identity.Name;
+        CanView = !recipe.Restricted || user == recipe.Owner || recipe.Users.Any(u => user == u.Email);
+        CanEdit = user == recipe.Owner || recipe.Users.Where(u => u.Editor).Any(u => user == u.Email);
+    }
+}
