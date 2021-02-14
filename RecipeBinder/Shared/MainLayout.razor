@@ -1,21 +1,95 @@
 ﻿@inherits LayoutComponentBase
+@inject ImageService ImageService
+@inject BugService BugService
 
 <div class="sidebar">
-    <NavMenu />
+    <NavMenu OnClick="(() => shown = true)" />
 </div>
 
 <div class="main">
-    <div class="top-row px-4 auth">
+    <div class="fixed-top top-row px-4 auth">
         <LoginDisplay />
     </div>
 
     <div class="content px-4">
         @Body
+        @if (shown)
+        {
+            <div class="modal" tabindex="-1" style="display:block" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title">Report a Bug</h3>
+                            <button type="button" class="close" @onclick="(() => shown = false)">
+                                <span aria-hidden="true">X</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <EditForm Model="@bug" OnSubmit="@SubmitAsync">
+                                <DataAnnotationsValidator />
+                                <ValidationSummary />
+                                <div class="form-group">
+                                    <label>Title</label>
+                                    <InputText @bind-Value="bug.Title" class="form-control"></InputText>
+                                </div>
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <InputTextArea @bind-Value="bug.Description" class="form-control"></InputTextArea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="file-upload" class="custom-file-upload btn">
+                                        <i class="oi oi-image"></i> Upload Screenshots
+                                    </label>
+                                    <input accept="image/*" class="d-none" id="file-upload" multiple type="file" @onchange="AddImagesAsync" @ref=reference />
+                                </div>
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                </div>
+                            </EditForm>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        <div class="gap"></div>
     </div>
 
     <footer class="fixed-bottom py-3 bg-dark">
         <div class="container font-small text-center text-white-50">
-            © 2020 Copyright: Recipe Binder - Developed and Maintained by Jawaad Salahuddin
+            © 2021 Copyright: Recipe Binder - Developed and Maintained by Jawaad Salahuddin
         </div>
     </footer>
 </div>
+
+@code {
+    private bool shown = false;
+
+    private Bug bug = new Bug
+    {
+        Images = new List<Image>()
+    };
+
+    private ElementReference reference;
+
+    /// <summary>
+    /// Validates submission
+    /// </summary>
+    public async Task SubmitAsync(EditContext editContext)
+    {
+        if (editContext.Validate())
+        {
+            shown = false;
+            await BugService.CreateAsync(bug);
+        }
+    }
+
+    /// <summary>
+    /// Adds images to bug report
+    /// </summary>
+    public async Task AddImagesAsync()
+    {
+        var files = await fileReaderService.CreateReference(reference).EnumerateFilesAsync();
+        List<Image> images = await ImageService.GetByteArraysAsync(files);
+        bug.Images.AddRange(images);
+    }
+}

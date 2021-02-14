@@ -1,48 +1,103 @@
 ﻿@inject RecipeService RecipeService
 
-@if (recipes == null)
+@if (!string.IsNullOrWhiteSpace(user))
 {
-    <p><em>Loading...</em></p>
+    <div class="form-group my-2">
+        <div class="form-check form-check-inline">
+            <input @onchange="(() => FilterAsync(Filter.Created))" class="form-check-input" type="radio" id="created" name="filter" checked />
+            <label class="form-check-label" for="created">Created By Me</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input @onchange="(() => FilterAsync(Filter.Shared))" class="form-check-input" type="radio" id="shared" name="filter" />
+            <label class="form-check-label" for="shared">Shared With Me</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input @onchange="(() => FilterAsync(Filter.Liked))" class="form-check-input" type="radio" id="liked" name="filter" />
+            <label class="form-check-label" for="liked">Liked By Me</label>
+        </div>
+    </div>
+}
+
+<div class="form-group my-2">
+    <div class="form-check form-check-inline">
+        <input @onchange="(() => SortAsync(Sort.Popularity))" class="form-check-input" type="radio" id="popularity" name="sort" checked />
+        <label class="form-check-label" for="popularity">Sort By Popularity</label>
+    </div>
+    <div class="form-check form-check-inline">
+        <input @onchange="(() => SortAsync(Sort.Newest))" class="form-check-input" type="radio" id="newest" name="sort" />
+        <label class="form-check-label" for="newest">Sort By Newest</label>
+    </div>
+</div>
+
+<input @bind-value="search" @bind-value:event="oninput" @onkeyup="EnterRecipe" type="search" class="form-control my-2" placeholder="Search" />
+
+@if (categories.Count() > 0)
+{
+    <label class="my-2">Filter by categories: </label>
+    foreach (Category category in categories)
+    {
+        <span class="badge badge-pill badge-dark">@category.Name</span>
+        <a @onclick="(() => RemoveCategoryAsync(category))" class="cursor-pointer">🗙</a>
+    }
+}
+
+@if (loading)
+{
+    <div class="my-2">
+        <span class="spinner-border spinner-border-sm"></span>
+        <em>Loading...</em>
+    </div>
 }
 else
 {
-    <input @bind-value="search" @bind-value:event="oninput" @onkeyup="EnterRecipe" type="search" class="form-control" placeholder="Search" />
-    if (categories.Count() > 0)
+    if (recipes.Count() == 0)
     {
-        <label>Filter by categories: </label>
-        @foreach (Category category in categories)
-        {
-            <span class="badge badge-pill badge-dark">@category.Name</span>
-            <a @onclick="(() => RemoveCategoryAsync(category))">🗙</a>
-        }
+        <p class="my-2">No Recipes Match Your Search Criteria.</p>
     }
-    <table class="table table-striped mt-xl-3">
-        @foreach (Recipe recipe in recipes)
-        {
+    else
+    {
+        <table class="table table-striped my-2">
             <tr>
-                <td>
-                    <NavLink href="@($"Recipes/Read/{recipe.Id}")">@recipe.Name</NavLink>
-                </td>
-                <td>
-                    @foreach (RecipeCategory recipeCategory in recipe.RecipeCategories)
-                    {
-                        <a @onclick="(() => AddCategoryAsync(recipeCategory.Category))" class="badge badge-pill badge-dark text-white">@recipeCategory.Category.Name</a>
-                    }
-                </td>
+                <th>Name</th>
+                <th>Categories</th>
+                <th>Popularity</th>
             </tr>
-        }
-    </table>
+            @foreach (Recipe recipe in recipes)
+            {
+                <tr>
+                    <td>
+                        <NavLink href="@($"Recipes/Read/{recipe.Id}")">@recipe.Name</NavLink>
+                    </td>
+                    <td>
+                        @foreach (RecipeCategory recipeCategory in recipe.RecipeCategories)
+                        {
+                            <a @onclick="(() => AddCategoryAsync(recipeCategory.Category))" class="badge badge-pill badge-dark text-white cursor-pointer">@recipeCategory.Category.Name</a>
+                        }
+                    </td>
+                    <td>
+                        <span class="oi oi-star"> @recipe.Likes.Count</span>
+                    </td>
+                </tr>
+            }
+        </table>
+    }
 }
 
 @code {
     [Parameter]
     public string user { get; set; }
 
+    private bool loading = true;
+
     private List<Recipe> recipes = new List<Recipe>();
 
     private List<Category> categories = new List<Category>();
 
-    public string search = string.Empty;
+    private string search = string.Empty;
+
+    private Sort sort = Sort.Popularity;
+
+    private Filter? filter = null;
 
     private Timer timer = new Timer
     {
@@ -53,34 +108,70 @@ else
     protected override async Task OnInitializedAsync()
     {
         timer.Elapsed += Elapsed;
+        if (!string.IsNullOrWhiteSpace(user)) filter = Filter.Created;
         await FetchRecipesAsync();
     }
 
+    /// <summary>
+    /// Restarts timer on key up
+    /// </summary>
     public void EnterRecipe()
     {
         timer.Stop();
         timer.Start();
     }
 
+    /// <summary>
+    /// Changes filter
+    /// </summary>
+    public async Task FilterAsync(Filter f)
+    {
+        filter = f;
+        await FetchRecipesAsync();
+    }
+
+    /// <summary>
+    /// Changes sort order
+    /// </summary>
+    public async Task SortAsync(Sort s)
+    {
+        sort = s;
+        await FetchRecipesAsync();
+    }
+
+    /// <summary>
+    /// Adds category to filter
+    /// </summary>
     public async Task AddCategoryAsync(Category category)
     {
         categories.Add(category);
         await FetchRecipesAsync();
     }
 
+    /// <summary>
+    /// Removes category to filter
+    /// </summary>
     public async Task RemoveCategoryAsync(Category category)
     {
         categories.Remove(category);
         await FetchRecipesAsync();
     }
 
+    /// <summary>
+    /// Fetches available recipes
+    /// </summary>
     public async Task FetchRecipesAsync()
     {
-        recipes = await RecipeService.FetchAsync(search, user, categories);
+        loading = true;
+        recipes = await RecipeService.FetchAsync(search, user, categories, sort, filter);
+        loading = false;
         StateHasChanged();
     }
 
-    public void Elapsed(Object source, ElapsedEventArgs args)
+    /// <summary>
+    /// Invokes method after timer elapses
+    /// </summary>
+    public void Elapsed(object source, ElapsedEventArgs args)
     {
         InvokeAsync(async () => await FetchRecipesAsync());
     }

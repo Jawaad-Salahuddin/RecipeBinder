@@ -19,9 +19,15 @@ namespace RecipeBinder.Data
 
         public DbSet<Category> Categories { get; set; }
 
-        public DbSet<User> Users { get; set; }
-
         public DbSet<RecipeCategory> RecipeCategories { get; set; }
+
+        public DbSet<Reader> Readers { get; set; }
+
+        public DbSet<Like> Likes { get; set; }
+
+        public DbSet<Bug> Bugs { get; set; }
+
+        public DbSet<Image> Images { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

@@ -2,7 +2,7 @@
 
 namespace RecipeBinder.Data.Models
 {
-    public class User
+    public class Reader
     {
         public int Id { get; set; }
 

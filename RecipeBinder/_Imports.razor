@@ -7,12 +7,15 @@
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.Extensions.Configuration
 @using Microsoft.JSInterop
 @using RecipeBinder
 @using RecipeBinder.Data.Models
 @using RecipeBinder.Data.Services
 @using RecipeBinder.Helpers
 @using RecipeBinder.Shared
+@using Tewr.Blazor.FileReader
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<IdentityUser> UserManager
+@inject IFileReaderService fileReaderService
