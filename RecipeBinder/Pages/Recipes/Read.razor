@@ -1,70 +1,103 @@
 ﻿@page "/Recipes/Read/{Id:int}"
 
 @inject RecipeService RecipeService
+@inject ImageService ImageService
+@inject IConfiguration configuration
 
-@if (CanView)
+@if (canView || isAdmin)
 {
-    <div class="d-xl-inline-block">
-        <h1>@recipe.Name</h1>
+    <h1>@recipe.Name</h1>
+    <div class="btn-group my-3">
+        @if (!string.IsNullOrWhiteSpace(user) && !canEdit || isAdmin)
+        {
+            if (liked)
+            {
+                <button @onclick="ToggleLike" class="btn btn-secondary"><span class="oi oi-circle-x"></span> Unlike</button>
+            }
+            else
+            {
+                <button @onclick="ToggleLike" class="btn btn-success"><span class="oi oi-star"></span> Like</button>
+            }
+        }
+        @if (canEdit || isAdmin)
+        {
+            <NavLink href="@($"Recipes/Update/{Id}")" class="btn btn-warning"><span class="oi oi-pencil"></span> Edit</NavLink>
+            <NavLink href="@($"Recipes/Delete/{Id}")" class="btn btn-danger"><span class="oi oi-trash"></span> Delete</NavLink>
+        }
     </div>
-    @if (CanEdit)
+
+    @if (shown.Any(h => h.Value))
     {
-        <div class="float-xl-right">
-            <div class="btn-group">
-                <NavLink href="@($"Recipes/Update/{Id}")" class="btn btn-warning"><span class="oi oi-pencil"></span> Edit</NavLink>
-                <NavLink href="@($"Recipes/Delete/{Id}")" class="btn btn-danger"><span class="oi oi-trash"></span> Delete</NavLink>
+        <div class="card my-3">
+            <div class="card-header">
+                <h5 class="d-flex justify-content-center">General</h5>
+            </div>
+            <div class="card-body">
+                @if (shown["PrepTime"])
+                {
+                    <h6>Prep Time: @recipe.PrepTime</h6>
+                }
+                @if (shown["CookTime"])
+                {
+                    <h6>Cook Time: @recipe.CookTime</h6>
+                }
+                @if (shown["Servings"])
+                {
+                    <h6>Servings: @recipe.Servings</h6>
+                }
+                @if (shown["Video"])
+                {
+                    <a href="@recipe.Video" target="_blank" rel="noopener noreferrer">Watch YouTube Video</a>
+                }
             </div>
         </div>
     }
 
-    <div class="row">
-        <div class="col-xl-2">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="d-flex justify-content-center">General</h5>
-                </div>
-                <div class="card-body">
-                    <ul>
-                        <li><strong>Prep Time:</strong> @recipe.PrepTime</li>
-                        <li><strong>Cook Time:</strong> @recipe.CookTime</li>
-                        <li><strong>Servings:</strong> @recipe.Servings</li>
-                    </ul>
-                </div>
-            </div>
+    <div class="card my-3">
+        <div class="card-header">
+            <h5 class="d-flex justify-content-center">Ingredients</h5>
         </div>
-
-        <div class="col-xl-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="d-flex justify-content-center">Ingredients</h5>
-                </div>
-                <div class="card-body">
-                    <ul>
-                        @foreach (Ingredient ingredient in recipe.Ingredients)
-                        {
-                            <li>@ingredient.Name (@ingredient.Quantity)</li>
-                        }
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="d-flex justify-content-center">Directions</h5>
-                </div>
-                <div class="card-body">
-                    <ol>
-                        @foreach (Direction direction in recipe.Directions.OrderBy(d => d.Step))
-                        {
-                            <li>@direction.Description</li>
-                        }
-                    </ol>
-                </div>
-            </div>
+        <div class="card-body">
+            <ul>
+                @foreach (Ingredient ingredient in recipe.Ingredients)
+                {
+                    <li>@ingredient.Quantity @ingredient.Name</li>
+                }
+            </ul>
         </div>
     </div>
+
+    <div class="card my-3">
+        <div class="card-header">
+            <h5 class="d-flex justify-content-center">Directions</h5>
+        </div>
+        <div class="card-body">
+            <ol>
+                @foreach (Direction direction in recipe.Directions.OrderBy(d => d.Step))
+                {
+                    <li>@direction.Description</li>
+                }
+            </ol>
+        </div>
+    </div>
+
+    @if (sources.Count > 0)
+    {
+        <div class="card my-3">
+            <div class="card-header">
+                <h5 class="d-flex justify-content-center">Images</h5>
+            </div>
+            <div class="card-body">
+                @foreach (string source in sources)
+                {
+                    <div class="row my-3">
+                        <img src="@source" class="img-thumbnail">
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    <br />
 }
 else
 {
@@ -75,18 +108,55 @@ else
     [Parameter]
     public int Id { get; set; }
 
-    private bool CanView = false;
+    public string user = null;
 
-    private bool CanEdit = false;
+    private bool canView = false;
+
+    private bool canEdit = false;
+
+    private bool isAdmin = false;
 
     private Recipe recipe = new Recipe();
+
+    private bool liked = false;
+
+    private Dictionary<string, bool> shown = new Dictionary<string, bool>();
+
+    private List<string> sources = new List<string>();
 
     protected override async Task OnInitializedAsync()
     {
         recipe = await RecipeService.GetAsync(Id);
         AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        string user = authState.User.Identity.Name;
-        CanView = !recipe.Restricted || user == recipe.Owner || recipe.Users.Any(u => user == u.Email);
-        CanEdit = user == recipe.Owner || recipe.Users.Where(u => u.Editor).Any(u => user == u.Email);
+        user = authState.User.Identity.Name;
+        List<string> admin = configuration.GetSection("Admin").Get<List<string>>();
+        isAdmin = admin.Contains(user);
+        canView = !recipe.Restricted || user == recipe.Owner || recipe.Readers.Any(u => user == u.Email);
+        canEdit = user == recipe.Owner || recipe.Readers.Where(u => u.Editor).Any(u => user == u.Email);
+        liked = recipe.Likes.Any(l => user == l.Email) ? true : false;
+        shown.Add("PrepTime", !string.IsNullOrWhiteSpace(recipe.PrepTime));
+        shown.Add("CookTime", !string.IsNullOrWhiteSpace(recipe.CookTime));
+        shown.Add("Servings", !string.IsNullOrWhiteSpace(recipe.Servings));
+        shown.Add("Video", !string.IsNullOrWhiteSpace(recipe.Video));
+        sources = await ImageService.GetImageSourcesAsync(recipe.Images);
+    }
+
+    /// <summary>
+    /// Toggles like/unlike
+    /// </summary>
+    public async Task ToggleLike()
+    {
+        if (liked)
+        {
+            Like like = recipe.Likes.Find(l => user == l.Email);
+            recipe.Likes.Remove(like);
+        }
+        else
+        {
+            Like like = new Like { Email = user };
+            recipe.Likes.Add(like);
+        }
+        liked = !liked;
+        await RecipeService.UpdateAsync(recipe);
     }
 }

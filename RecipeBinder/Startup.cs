@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Tewr.Blazor.FileReader;
 using RecipeBinder.Areas.Identity;
 using RecipeBinder.Data;
 using RecipeBinder.Data.Services;
@@ -33,17 +34,32 @@ namespace RecipeBinder
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddRazorPages();
             services.AddServerSideBlazor();
+            services.AddMvc();
             services.AddAuthentication()
                 .AddGoogle(options =>
                 {
-                    IConfigurationSection googleAuthNSection = Configuration.GetSection("Authentication:Google");
-                    options.ClientId = googleAuthNSection["ClientId"];
-                    options.ClientSecret = googleAuthNSection["ClientSecret"];
+                    options.ClientId = Configuration["Authentication:Google:ClientId"];
+                    options.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
+                })
+                .AddFacebook(options =>
+                {
+                    options.AppId = Configuration["Authentication:Facebook:AppId"];
+                    options.AppSecret = Configuration["Authentication:Facebook:AppSecret"];
+                    options.AccessDeniedPath = "/AccessDeniedPathInfo";
+                })
+                .AddTwitter(options =>
+                {
+                    options.ConsumerKey = Configuration["Authentication:Twitter:ConsumerAPIKey"];
+                    options.ConsumerSecret = Configuration["Authentication:Twitter:ConsumerSecret"];
+                    options.RetrieveUserDetails = true;
                 });
             services.AddTransient<IEmailSender, EmailSender>();
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
             services.AddScoped<RecipeService>();
             services.AddScoped<CategoryService>();
+            services.AddScoped<ImageService>();
+            services.AddScoped<BugService>();
+            services.AddFileReaderService();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

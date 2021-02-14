@@ -1,0 +1,63 @@
+﻿@page "/Bugs"
+
+@attribute [Authorize]
+@inject BugService BugService
+@inject ImageService ImageService
+@inject IConfiguration configuration
+
+@if (isAdmin)
+{
+    <table class="table table-striped my-2">
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Images</th>
+        </tr>
+        @foreach (Bug bug in bugs.OrderByDescending(b => b.Id))
+        {
+            <tr>
+                <td>@bug.Title</td>
+                <td>@bug.Description</td>
+                <td>
+                    @foreach (List<string> sources in sourceList.Where(s => s.Key.Equals(bug)).Select(s => s.Value))
+                    {
+                        foreach (string source in sources)
+                        {
+                            <div class="row my-3">
+                                <img src="@source" class="img-thumbnail">
+                            </div>
+                        }
+                    }
+                </td>
+            </tr>
+        }
+    </table>
+}
+else
+{
+    <p>Not authorized</p>
+}
+
+@code {
+    private string user = string.Empty;
+
+    private bool isAdmin = false;
+
+    private List<Bug> bugs = new List<Bug>();
+
+    private Dictionary<Bug, List<string>> sourceList = new Dictionary<Bug, List<string>>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authState.User.Identity.Name;
+        List<string> admin = configuration.GetSection("Admin").Get<List<string>>();
+        isAdmin = admin.Contains(user);
+        bugs = await BugService.FetchAsync();
+        foreach (Bug bug in bugs)
+        {
+            List<string> sources = await ImageService.GetImageSourcesAsync(bug.Images);
+            sourceList.Add(bug, sources);
+        }
+    }
+}

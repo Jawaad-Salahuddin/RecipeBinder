@@ -3,6 +3,8 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using RecipeBinder.Data;
 
 namespace RecipeBinder.Data.Migrations
 {
@@ -13,7 +15,7 @@ namespace RecipeBinder.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.7")
+                .HasAnnotation("ProductVersion", "3.1.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -217,6 +219,25 @@ namespace RecipeBinder.Data.Migrations
                     b.ToTable("AspNetUserTokens");
                 });
 
+            modelBuilder.Entity("RecipeBinder.Data.Models.Bug", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Bugs");
+                });
+
             modelBuilder.Entity("RecipeBinder.Data.Models.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -256,6 +277,31 @@ namespace RecipeBinder.Data.Migrations
                     b.ToTable("Directions");
                 });
 
+            modelBuilder.Entity("RecipeBinder.Data.Models.Image", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int?>("BugId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("Content")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<int?>("RecipeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BugId");
+
+                    b.HasIndex("RecipeId");
+
+                    b.ToTable("Images");
+                });
+
             modelBuilder.Entity("RecipeBinder.Data.Models.Ingredient", b =>
                 {
                     b.Property<int>("Id")
@@ -278,6 +324,49 @@ namespace RecipeBinder.Data.Migrations
                     b.HasIndex("RecipeId");
 
                     b.ToTable("Ingredients");
+                });
+
+            modelBuilder.Entity("RecipeBinder.Data.Models.Like", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RecipeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecipeId");
+
+                    b.ToTable("Likes");
+                });
+
+            modelBuilder.Entity("RecipeBinder.Data.Models.Reader", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<bool>("Editor")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RecipeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecipeId");
+
+                    b.ToTable("Readers");
                 });
 
             modelBuilder.Entity("RecipeBinder.Data.Models.Recipe", b =>
@@ -306,6 +395,9 @@ namespace RecipeBinder.Data.Migrations
                     b.Property<string>("Servings")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Video")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Recipes");
@@ -324,29 +416,6 @@ namespace RecipeBinder.Data.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("RecipeCategories");
-                });
-
-            modelBuilder.Entity("RecipeBinder.Data.Models.User", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<bool>("Editor")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("RecipeId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RecipeId");
-
-                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -409,10 +478,39 @@ namespace RecipeBinder.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RecipeBinder.Data.Models.Image", b =>
+                {
+                    b.HasOne("RecipeBinder.Data.Models.Bug", null)
+                        .WithMany("Images")
+                        .HasForeignKey("BugId");
+
+                    b.HasOne("RecipeBinder.Data.Models.Recipe", null)
+                        .WithMany("Images")
+                        .HasForeignKey("RecipeId");
+                });
+
             modelBuilder.Entity("RecipeBinder.Data.Models.Ingredient", b =>
                 {
                     b.HasOne("RecipeBinder.Data.Models.Recipe", "Recipe")
                         .WithMany("Ingredients")
+                        .HasForeignKey("RecipeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RecipeBinder.Data.Models.Like", b =>
+                {
+                    b.HasOne("RecipeBinder.Data.Models.Recipe", "Recipe")
+                        .WithMany("Likes")
+                        .HasForeignKey("RecipeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RecipeBinder.Data.Models.Reader", b =>
+                {
+                    b.HasOne("RecipeBinder.Data.Models.Recipe", "Recipe")
+                        .WithMany("Readers")
                         .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -428,15 +526,6 @@ namespace RecipeBinder.Data.Migrations
 
                     b.HasOne("RecipeBinder.Data.Models.Recipe", "Recipe")
                         .WithMany("RecipeCategories")
-                        .HasForeignKey("RecipeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("RecipeBinder.Data.Models.User", b =>
-                {
-                    b.HasOne("RecipeBinder.Data.Models.Recipe", "Recipe")
-                        .WithMany("Users")
                         .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

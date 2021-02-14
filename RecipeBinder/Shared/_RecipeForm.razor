@@ -1,17 +1,11 @@
 ﻿@inject RecipeService RecipeService
 @inject CategoryService CategoryService
+@inject ImageService ImageService
 
 <EditForm Model="@recipe" OnSubmit="@SubmitAsync">
-    <div class="d-xl-inline-block">
-        <h1>@operation Recipe</h1>
-    </div>
-    <div class="float-xl-right">
-        <div class="btn-group">
-            <button type="submit" class="d-none" disabled></button>
-            <button type="submit" class="btn btn-primary">Save</button>
-            <NavLink href="@link" class="btn btn-light">Go Back</NavLink>
-        </div>
-    </div>
+    <h1>@operation Recipe</h1>
+    <button type="submit" class="d-none" disabled></button>
+    <button type="submit" class="btn btn-primary my-3">Save</button>
     <DataAnnotationsValidator />
     <ValidationSummary />
     <ul class="nav nav-tabs">
@@ -36,73 +30,75 @@
                 <label>Name</label>
                 <InputText @bind-Value="recipe.Name" class="form-control"></InputText>
             </div>
-            <div class="row">
-                <div class="col-xl-4">
-                    <div class="form-group">
-                        <label>Prep Time</label>
-                        <InputText @bind-Value="recipe.PrepTime" class="form-control"></InputText>
-                    </div>
-                </div>
-                <div class="col-xl-4">
-                    <div class="form-group">
-                        <label>Cook Time</label>
-                        <InputText @bind-Value="recipe.CookTime" class="form-control"></InputText>
-                    </div>
-                </div>
-                <div class="col-xl-4">
-                    <div class="form-group">
-                        <label>Servings</label>
-                        <InputText @bind-Value="recipe.Servings" class="form-control"></InputText>
-                    </div>
-                </div>
+            <div class="form-group">
+                <label>Prep Time</label>
+                <InputText @bind-Value="recipe.PrepTime" class="form-control"></InputText>
             </div>
             <div class="form-group">
-                <label>Categories</label><br />
-                @foreach (RecipeCategory recipeCategory in recipe.RecipeCategories)
-                {
-                    <span class="badge badge-pill badge-dark">@recipeCategory.Category.Name</span>
-                    <a @onclick="(() => RemoveCategoryAsync(recipeCategory))">🗙</a>
-                }
-                <hr />
-                <input @bind-value="search" @bind-value:event="oninput" @onkeyup="EnterCategoryAsync" type="search" class="form-control" placeholder="Press enter to add a category" />
-                <label class="mt-xl-3">Click on a category below to add</label><br />
-                @foreach (Category category in categories)
-                {
-                    <a @onclick="(() => AddCategoryAsync(category))" class="badge badge-pill badge-dark text-white">@category.Name</a>
-                }
+                <label>Cook Time</label>
+                <InputText @bind-Value="recipe.CookTime" class="form-control"></InputText>
+            </div>
+            <div class="form-group">
+                <label>Servings</label>
+                <InputText @bind-Value="recipe.Servings" class="form-control"></InputText>
+            </div>
+            <div class="form-group">
+                <label>Link to YouTube Video</label>
+                <InputText @bind-Value="recipe.Video" class="form-control"></InputText>
+            </div>
+            <div class="form-group">
+                <label for="file-upload" class="custom-file-upload btn">
+                    <i class="oi oi-image"></i> Upload Images
+                </label>
+                <input accept="image/*" class="d-none" id="file-upload" multiple type="file" @onchange="AddImagesAsync" @ref=reference />
+            </div>
+            <div class="form-group">
+                <label>Categories</label>
+                <div>
+                    @foreach (RecipeCategory recipeCategory in recipe.RecipeCategories)
+                    {
+                        <span class="badge badge-pill badge-dark">@recipeCategory.Category.Name</span>
+                        <a @onclick="(() => RemoveCategoryAsync(recipeCategory))" class="cursor-pointer">🗙</a>
+                    }
+                </div>
+                <input @bind-value="search" @bind-value:event="oninput" @onkeyup="EnterCategoryAsync" type="search" class="form-control my-1" placeholder="Press enter to add a category" />
+                <label>Click on a category below to add</label>
+                <div>
+                    @foreach (Category category in categories)
+                    {
+                        <a @onclick="(() => AddCategoryAsync(category))" class="badge badge-pill badge-dark text-white cursor-pointer">@category.Name</a>
+                    }
+                </div>
             </div>
         }
         else if (tab == 1)
         {
             if (recipe.Ingredients.Count() > 0)
             {
-                <div class="row">
-                    <div class="col-xl-8">
-                        <label>Name</label>
-                    </div>
-                    <div class="col-xl-4">
-                        <label>Quantity</label>
-                    </div>
-                </div>
-                for (int i = 0; i < recipe.Ingredients.Count(); i++)
-                {
-                    Ingredient ingredient = recipe.Ingredients[i];
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-xl-8">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Name</th>
+                        <th>Quantity</th>
+                        <th></th>
+                    </tr>
+                    @for (int i = 0; i < recipe.Ingredients.Count(); i++)
+                    {
+                        Ingredient ingredient = recipe.Ingredients[i];
+                        <tr>
+                            <td>
                                 <InputText @bind-Value="ingredient.Name" class="form-control"></InputText>
-                            </div>
-                            <div class="col-xl-3">
+                            </td>
+                            <td>
                                 <InputText @bind-Value="ingredient.Quantity" class="form-control"></InputText>
-                            </div>
-                            <div class="col-xl-1">
+                            </td>
+                            <td>
                                 <button @onclick="(() => recipe.Ingredients.Remove(ingredient))" type="button" class="btn btn-secondary">
                                     <span class="oi oi-trash"></span>
                                 </button>
-                            </div>
-                        </div>
-                    </div>
-                }
+                            </td>
+                        </tr>
+                    }
+                </table>
             }
             <div class="form-group">
                 <button @onclick="(() => recipe.Ingredients.Add(new Ingredient()))" type="button" class="btn btn-secondary">
@@ -114,38 +110,35 @@
         {
             if (recipe.Directions.Count() > 0)
             {
-                <div class="row">
-                    <div class="col-xl-1">
-                        <label>Step</label>
-                    </div>
-                    <div class="col-xl-11">
-                        <label>Description</label>
-                    </div>
-                </div>
-                for (int i = 0; i < recipe.Directions.Count(); i++)
-                {
-                    Direction direction = recipe.Directions[i];
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-xl-1">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Step</th>
+                        <th>Description</th>
+                        <th></th>
+                    </tr>
+                    @for (int i = 0; i < recipe.Directions.Count(); i++)
+                    {
+                        Direction direction = recipe.Directions[i];
+                        <tr>
+                            <td>
                                 <InputSelectNumber @bind-Value="direction.Step" class="form-control">
                                     @foreach (int step in steps.OrderBy(s => s))
                                                 {
                                         <option value="@step">@step</option>
                                                 }
                                 </InputSelectNumber>
-                            </div>
-                            <div class="col-xl-10">
+                            </td>
+                            <td>
                                 <InputTextArea @bind-Value="direction.Description" class="form-control"></InputTextArea>
-                            </div>
-                            <div class="col-xl-1">
+                            </td>
+                            <td>
                                 <button @onclick="(() => RemoveDirection(direction))" type="button" class="btn btn-secondary">
                                     <span class="oi oi-trash"></span>
                                 </button>
-                            </div>
-                        </div>
-                    </div>
-                }
+                            </td>
+                        </tr>
+                    }
+                </table>
             }
             <div class="form-group">
                 <button @onclick="(() => AddDirection())" type="button" class="btn btn-secondary">
@@ -158,47 +151,41 @@
             <div class="form-group">
                 <div class="custom-control custom-switch">
                     <InputCheckbox @bind-Value="recipe.Restricted" class="custom-control-input" id="restricted"></InputCheckbox>
-                    <label class="custom-control-label" for="restricted">Only users listed below can view this recipe</label>
+                    <label class="custom-control-label" for="restricted">Make this recipe private</label>
                 </div>
             </div>
             if (recipe.Restricted)
             {
-                if (recipe.Users.Count() > 0)
+                if (recipe.Readers.Count() > 0)
                 {
-                    <div class="row">
-                        <div class="col-xl-6">
-                            <label>Email Address</label>
-                        </div>
-                        <div class="col-xl-6">
-                            <label>Access Level</label>
-                        </div>
-                    </div>
-                    for (int i = 0; i < recipe.Users.Count(); i++)
-                    {
-                        User user = recipe.Users[i];
-                        <div class="form-group">
-                            <div class="row">
-                                <div class="col-xl-6">
-                                    <InputText @bind-Value="user.Email"></InputText>
-                                </div>
-                                <div class="col-xl-5">
-                                    <div class="custom-control custom-switch">
-                                        <InputCheckbox @bind-Value="user.Editor" class="custom-control-input" id="@($"editor{user.Email}")"></InputCheckbox>
-                                        <label class="custom-control-label" for="@($"editor{user.Email}")">Edit</label>
-                                    </div>
-                                </div>
-                                <div class="col-xl-1">
-                                    <button @onclick="(() => recipe.Users.Remove(user))" type="button" class="btn btn-secondary">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th>Email Address</th>
+                            <th>Edit Access</th>
+                            <th></th>
+                        </tr>
+                        @for (int i = 0; i < recipe.Readers.Count(); i++)
+                        {
+                            Reader reader = recipe.Readers[i];
+                            <tr>
+                                <td>
+                                    <InputText @bind-Value="reader.Email" class="form-control"></InputText>
+                                </td>
+                                <td>
+                                    <InputCheckbox @bind-Value="reader.Editor"></InputCheckbox>
+                                </td>
+                                <td>
+                                    <button @onclick="(() => recipe.Readers.Remove(reader))" type="button" class="btn btn-secondary">
                                         <span class="oi oi-trash"></span>
                                     </button>
-                                </div>
-                            </div>
-                        </div>
-                    }
+                                </td>
+                            </tr>
+                        }
+                    </table>
                 }
                 <div class="form-group">
-                    <button @onclick="(() => recipe.Users.Add(new User()))" type="button" class="btn btn-secondary">
-                        <span class="oi oi-plus"></span> New User
+                    <button @onclick="(() => recipe.Readers.Add(new Reader()))" type="button" class="btn btn-secondary">
+                        <span class="oi oi-plus"></span> Grant access to a friend
                     </button>
                 </div>
             }
@@ -211,9 +198,6 @@
     public Recipe recipe { get; set; }
 
     [Parameter]
-    public string link { get; set; }
-
-    [Parameter]
     public string operation { get; set; }
 
     private List<Category> categories = new List<Category>();
@@ -221,6 +205,8 @@
     private Stack<int> steps = new Stack<int>();
 
     private string search = string.Empty;
+
+    private ElementReference reference;
 
     private Timer timer = new Timer
     {
@@ -245,6 +231,9 @@
         }
     }
 
+    /// <summary>
+    /// Handles submission
+    /// </summary>
     public async Task SubmitAsync(EditContext editContext)
     {
         int pops = recipe.Directions.Count();
@@ -254,13 +243,14 @@
             switch (operation)
             {
                 case "Create":
-                    id = await RecipeService.CreateAsync(recipe);
+                    await RecipeService.CreateAsync(recipe);
+                    NavigationManager.NavigateTo("Recipes");
                     break;
                 case "Update":
                     await RecipeService.UpdateAsync(recipe);
+                    NavigationManager.NavigateTo($"/Recipes/Read/{id}");
                     break;
             }
-            NavigationManager.NavigateTo($"/Recipes/Read/{id}");
         }
         else
         {
@@ -272,32 +262,58 @@
         }
     }
 
+    /// <summary>
+    /// Adds uploaded images to recipe
+    /// </summary>
+    public async Task AddImagesAsync()
+    {
+        var files = await fileReaderService.CreateReference(reference).EnumerateFilesAsync();
+        List<Image> images = await ImageService.GetByteArraysAsync(files);
+        recipe.Images.AddRange(images);
+    }
+
+    /// <summary>
+    /// Verifies category on enter key
+    /// </summary>
     public async Task EnterCategoryAsync(KeyboardEventArgs args)
     {
         timer.Stop();
         if (args.Key == "Enter")
         {
-            Category category = await CategoryService.GetAsync(search);
-            if (category == null) category = new Category { Name = search };
-            await AddCategoryAsync(category);
+            string upper = search.ToUpper();
+            if (!string.IsNullOrWhiteSpace(upper) && !recipe.RecipeCategories.Any(rc => rc.Category.Name.Equals(upper)))
+            {
+                Category category = await CategoryService.GetAsync(upper);
+                if (category == null) category = new Category { Name = upper };
+                await AddCategoryAsync(category);
+            }
+            search = string.Empty;
         }
         timer.Start();
     }
 
+    /// <summary>
+    /// Adds category to recipe
+    /// </summary>
     public async Task AddCategoryAsync(Category category)
     {
         RecipeCategory recipeCategory = new RecipeCategory { Category = category };
         recipe.RecipeCategories.Add(recipeCategory);
-        search = string.Empty;
         await FetchCategoriesAsync();
     }
 
+    /// <summary>
+    /// Removes category from recipe
+    /// </summary>
     public async Task RemoveCategoryAsync(RecipeCategory recipeCategory)
     {
         recipe.RecipeCategories.Remove(recipeCategory);
         await FetchCategoriesAsync();
     }
 
+    /// <summary>
+    /// Adds direction to recipe
+    /// </summary>
     public void AddDirection()
     {
         int count = recipe.Directions.Count() + 1;
@@ -306,12 +322,18 @@
         steps.Push(count);
     }
 
+    /// <summary>
+    /// Removes direction from recipe
+    /// </summary>
     public void RemoveDirection(Direction direction)
     {
         recipe.Directions.Remove(direction);
         steps.Pop();
     }
 
+    /// <summary>
+    /// Changes active nav-link
+    /// </summary>
     public void ToggleTab(int number)
     {
         for (int i = 0; i < styles.Count(); i++)
@@ -322,13 +344,19 @@
         styles[number] = string.Concat(styles[number], " active");
     }
 
+    /// <summary>
+    /// Fetches available categories
+    /// </summary>
     public async Task FetchCategoriesAsync()
     {
         categories = await CategoryService.FetchAsync(recipe.RecipeCategories, search);
         StateHasChanged();
     }
 
-    public void Elapsed(Object source, ElapsedEventArgs args)
+    /// <summary>
+    /// Invokes method after timer elapses
+    /// </summary>
+    public void Elapsed(object source, ElapsedEventArgs args)
     {
         InvokeAsync(async () => await FetchCategoriesAsync());
     }

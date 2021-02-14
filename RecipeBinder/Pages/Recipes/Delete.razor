@@ -2,23 +2,16 @@
 
 @attribute [Authorize]
 @inject RecipeService RecipeService
+@inject IConfiguration configuration
 
-@if (CanEdit)
+@if (canEdit || isAdmin)
 {
     <EditForm Model="@recipe" OnSubmit="@SubmitAsync">
-        <div class="d-xl-inline-block">
-            <h1>Are you sure you want to delete this recipe?</h1>
-        </div>
-        <div class="float-xl-right">
-            <div class="btn-group">
-                <button type="submit" class="d-none" disabled></button>
-                <button type="submit" class="btn btn-danger">Delete</button>
-                <NavLink href="@($"Recipes/Read/{Id}")" class="btn btn-light">Go Back</NavLink>
-            </div>
-        </div>
+        <h1>Are you sure you want to delete this recipe?</h1>
+        <button type="submit" class="btn btn-danger my-3">Delete</button>
     </EditForm>
 
-    <table class="table">
+    <table class="table my-3">
         <tr>
             <th>Name</th>
             <td>@recipe.Name</td>
@@ -29,7 +22,7 @@
                 <ul>
                     @foreach (Ingredient ingredient in recipe.Ingredients)
                     {
-                        <li>@ingredient.Name (@ingredient.Quantity)</li>
+                        <li>@ingredient.Quantity @ingredient.Name</li>
                     }
                 </ul>
             </td>
@@ -46,6 +39,18 @@
             </td>
         </tr>
         <tr>
+            <th>Categories</th>
+            <td>
+                @foreach (RecipeCategory recipeCategory in recipe.RecipeCategories)
+                {
+                    @if (recipeCategory.Category != null)
+                    {
+                        <span class="badge badge-pill badge-dark">@recipeCategory.Category.Name</span>
+                    }
+                }
+            </td>
+        </tr>
+        <tr>
             <th>Prep Time</th>
             <td>@recipe.PrepTime</td>
         </tr>
@@ -58,24 +63,34 @@
             <td>@recipe.Servings</td>
         </tr>
         <tr>
+            <th>YouTube URL</th>
+            <td>
+                <a href="@recipe.Video" target="_blank" rel="noopener noreferrer">@recipe.Video</a>
+            </td>
+        </tr>
+        <tr>
+            <th>Likes</th>
+            <td>@recipe.Likes.Count</td>
+        </tr>
+        <tr>
             <th>Created By</th>
             <td>@recipe.Owner</td>
         </tr>
         @if (recipe.Restricted)
         {
             <tr>
-                <th>Permitted Users</th>
+                <th>Users with Access</th>
                 <td>
                     <ul>
-                        @foreach (User user in recipe.Users)
+                        @foreach (Reader reader in recipe.Readers)
                         {
-                            @if (user.Editor)
+                            @if (reader.Editor)
                             {
-                                <li>@user.Email (Edit Access)</li>
+                                <li>@reader.Email (Edit Access)</li>
                             }
                             else
                             {
-                                <li>@user.Email</li>
+                                <li>@reader.Email</li>
                             }
                         }
                     </ul>
@@ -93,7 +108,9 @@ else
     [Parameter]
     public int Id { get; set; }
 
-    private bool CanEdit = false;
+    private bool canEdit = false;
+
+    private bool isAdmin = false;
 
     private Recipe recipe = new Recipe();
 
@@ -102,9 +119,14 @@ else
         recipe = await RecipeService.GetAsync(Id);
         AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         string user = authState.User.Identity.Name;
-        CanEdit = user == recipe.Owner || recipe.Users.Where(u => u.Editor).Any(u => user == u.Email);
+        List<string> admin = configuration.GetSection("Admin").Get<List<string>>();
+        isAdmin = admin.Contains(user);
+        canEdit = user == recipe.Owner || recipe.Readers.Where(u => u.Editor).Any(u => user == u.Email);
     }
 
+    /// <summary>
+    /// Submits deletion
+    /// </summary>
     public async Task SubmitAsync()
     {
         await RecipeService.DeleteAsync(recipe);

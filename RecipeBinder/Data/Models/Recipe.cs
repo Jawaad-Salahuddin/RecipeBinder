@@ -29,6 +29,13 @@ namespace RecipeBinder.Data.Models
 
         public bool Restricted { get; set; }
 
-        public virtual List<User> Users { get; set; }
+        public virtual List<Reader> Readers { get; set; }
+
+        [ValidYouTubeUrl]
+        public string Video { get; set; }
+
+        public virtual List<Image> Images { get; set; }
+
+        public virtual List<Like> Likes { get; set; }
     }
 }

@@ -2,10 +2,11 @@
 
 @attribute [Authorize]
 @inject RecipeService RecipeService
+@inject IConfiguration configuration
 
-@if (CanEdit)
+@if (canEdit || isAdmin)
 {
-    <_RecipeForm recipe="recipe" link="@($"Recipes/Read/{Id}")" operation="Update"></_RecipeForm>
+    <_RecipeForm recipe="recipe" operation="Update"></_RecipeForm>
 }
 else
 {
@@ -16,7 +17,9 @@ else
     [Parameter]
     public int Id { get; set; }
 
-    private bool CanEdit = false;
+    private bool canEdit = false;
+
+    private bool isAdmin = false;
 
     private Recipe recipe = new Recipe();
 
@@ -25,6 +28,8 @@ else
         recipe = await RecipeService.GetAsync(Id);
         AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         string user = authState.User.Identity.Name;
-        CanEdit = user == recipe.Owner || recipe.Users.Where(u => u.Editor).Any(u => user == u.Email);
+        List<string> admin = configuration.GetSection("Admin").Get<List<string>>();
+        isAdmin = admin.Contains(user);
+        canEdit = user == recipe.Owner || recipe.Readers.Where(u => u.Editor).Any(u => user == u.Email);
     }
 }

@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using RecipeBinder.Data.Models;
 
 namespace RecipeBinder.Data.Services
@@ -15,40 +15,77 @@ namespace RecipeBinder.Data.Services
             db = context;
         }
 
-        public async Task<List<Recipe>> FetchAsync(string search, string user, List<Category> categories)
+        /// <summary>
+        /// Fetches recipes based on user input from db
+        /// </summary>
+        public async Task<List<Recipe>> FetchAsync(string search, string user, List<Category> categories, Sort sort, Filter? filter)
         {
             IQueryable<Recipe> recipes = db.Recipes.Where(r => r.Name.Contains(search));
             if (categories.Count() > 0) recipes = recipes.Where(r => r.RecipeCategories.Any(rc => categories.Any(c => c.Equals(rc.Category))));
             if (user == null)
             {
-                return await recipes.Where(r => !r.Restricted).ToListAsync();
+                recipes = recipes.Where(r => !r.Restricted);
             }
             else
             {
-                return await recipes.Where(r => user == r.Owner || r.Users.Any(u => user == u.Email)).ToListAsync();
+                switch (filter)
+                {
+                    case Filter.Created:
+                        recipes = recipes.Where(r => user == r.Owner);
+                        break;
+                    case Filter.Shared:
+                        recipes = recipes.Where(r => r.Readers.Any(u => user == u.Email));
+                        break;
+                    case Filter.Liked:
+                        recipes = recipes.Where(r => r.Likes.Any(l => user == l.Email));
+                        break;
+                }
             }
+            switch (sort)
+            {
+                case Sort.Popularity:
+                    recipes = recipes.OrderByDescending(r => r.Likes.Count).ThenByDescending(r => r.Id);
+                    break;
+                case Sort.Newest:
+                    recipes = recipes.OrderByDescending(r => r.Id).ThenByDescending(r => r.Likes.Count);
+                    break;
+            }
+            return await recipes.ToListAsync();
         }
 
-        public async Task<Recipe> GetAsync(int id)
-        {
-            return await db.Recipes.FindAsync(id);
-        }
+        /// <summary>
+        /// Gets recipe from db given id
+        /// </summary>
+        public async Task<Recipe> GetAsync(int id) => await db.Recipes.FindAsync(id);
 
-        public async Task<int> CreateAsync(Recipe recipe)
+        /// <summary>
+        /// Adds recipe to db
+        /// </summary>
+        public async Task CreateAsync(Recipe recipe)
         {
             db.Recipes.Add(recipe);
             await db.SaveChangesAsync();
-            return recipe.Id;
         }
 
+        /// <summary>
+        /// Modifies db entry of recipe
+        /// </summary>
         public async Task UpdateAsync(Recipe recipe)
         {
             db.Entry(recipe).State = EntityState.Modified;
             await db.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// Deletes recipe from db
+        /// </summary>
         public async Task DeleteAsync(Recipe recipe)
         {
+            foreach (RecipeCategory recipeCategory in recipe.RecipeCategories)
+            {
+                Category category = recipeCategory.Category;
+                if (category.RecipeCategories.Count == 1) db.Categories.Remove(category);
+            }
             db.Recipes.Remove(recipe);
             await db.SaveChangesAsync();
         }

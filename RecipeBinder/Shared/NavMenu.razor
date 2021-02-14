@@ -1,4 +1,6 @@
-﻿<div class="top-row pl-4 navbar navbar-dark">
+﻿@inject IConfiguration configuration
+
+<div class="top-row pl-4 navbar navbar-dark">
     <a class="navbar-brand" href="">Recipe Binder</a>
     <button class="navbar-toggler" @onclick="ToggleNavMenu">
         <span class="navbar-toggler-icon"></span>
@@ -12,26 +14,62 @@
                 <span class="oi oi-home" aria-hidden="true"></span> Home
             </NavLink>
         </li>
+        @if (!string.IsNullOrWhiteSpace(user))
+        {
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="Recipes" Match="NavLinkMatch.All">
+                    <span class="oi oi-list-rich d-none d-sm-block" aria-hidden="true"></span> My Recipes
+                </NavLink>
+            </li>
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="Recipes/Create" Match="NavLinkMatch.All">
+                    <span class="oi oi-plus d-none d-sm-block" aria-hidden="true"></span> New Recipe
+                </NavLink>
+            </li>
+        }
         <li class="nav-item px-3">
-            <NavLink class="nav-link" href="Recipes">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Search Recipes
+            <NavLink class="nav-link" href="https://github.com/Jawaad-Salahuddin/RecipeBinder" target="_blank" rel="noopener noreferrer">
+                <span class="oi oi-code d-none d-sm-block" aria-hidden="true"></span> View Code
             </NavLink>
         </li>
         <li class="nav-item px-3">
-            <NavLink class="nav-link" href="Recipes/My">
-                <span class="oi oi-list" aria-hidden="true"></span> My Recipes
+            <NavLink class="nav-link cursor-pointer" @onclick="(() => OnClick.InvokeAsync(true))">
+                <span class="oi oi-bug d-none d-sm-block" aria-hidden="true"></span> Report a Bug
             </NavLink>
         </li>
+        @if (isAdmin)
+        {
+            <li class="nav-item px-3">
+                <NavLink class="nav-link cursor-pointer" href="Bugs" Match="NavLinkMatch.All">
+                    <span class="oi oi-monitor" aria-hidden="true"></span> Admin
+                </NavLink>
+            </li>
+        }
     </ul>
 </div>
 
 @code {
+    [Parameter]
+    public EventCallback<bool> OnClick { get; set; }
+
     private bool collapseNavMenu = true;
 
     private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
+    private string user = string.Empty;
+
+    private bool isAdmin = false;
+
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authState.User.Identity.Name;
+        List<string> admin = configuration.GetSection("Admin").Get<List<string>>();
+        if (admin.Contains(user)) isAdmin = true;
     }
 }

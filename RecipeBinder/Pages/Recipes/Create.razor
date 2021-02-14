@@ -2,7 +2,7 @@
 
 @attribute [Authorize]
 
-<_RecipeForm recipe="recipe" link="@($"Recipes")" operation="Create"></_RecipeForm>
+<_RecipeForm recipe="recipe" operation="Create"></_RecipeForm>
 
 @code {
     private Recipe recipe = new Recipe
@@ -10,7 +10,9 @@
         Ingredients = new List<Ingredient>(),
         Directions = new List<Direction>(),
         RecipeCategories = new List<RecipeCategory>(),
-        Users = new List<User>()
+        Readers = new List<Reader>(),
+        Images = new List<Image>(),
+        Likes = new List<Like>()
     };
 
     protected override async Task OnInitializedAsync()
