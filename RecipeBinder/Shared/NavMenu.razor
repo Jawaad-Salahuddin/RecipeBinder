@@ -45,6 +45,9 @@
                 </NavLink>
             </li>
         }
+        <li>@configuration["EmailAddress"]</li>
+        <li>@configuration.GetSection("EmailAddress")</li>
+        <li>@test</li>
     </ul>
 </div>
 
@@ -60,6 +63,8 @@
 
     private bool isAdmin = false;
 
+    private string test = string.Empty;
+
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
@@ -70,5 +75,6 @@
         AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         user = authState.User.Identity.Name;
         isAdmin = user == configuration["Admin"];
+        test = configuration.GetValue<string>("EmailAddress");
     }
 }
