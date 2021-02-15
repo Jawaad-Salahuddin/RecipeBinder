@@ -18,23 +18,23 @@
         {
             <li class="nav-item px-3">
                 <NavLink class="nav-link" href="Recipes" Match="NavLinkMatch.All">
-                    <span class="oi oi-list-rich" aria-hidden="true"></span> My Recipes
+                    <span class="oi oi-list-rich d-none d-sm-block" aria-hidden="true"></span> My Recipes
                 </NavLink>
             </li>
             <li class="nav-item px-3">
                 <NavLink class="nav-link" href="Recipes/Create" Match="NavLinkMatch.All">
-                    <span class="oi oi-plus" aria-hidden="true"></span> New Recipe
+                    <span class="oi oi-plus d-none d-sm-block" aria-hidden="true"></span> New Recipe
                 </NavLink>
             </li>
         }
         <li class="nav-item px-3">
             <NavLink class="nav-link" href="https://github.com/Jawaad-Salahuddin/RecipeBinder" target="_blank" rel="noopener noreferrer">
-                <span class="oi oi-code" aria-hidden="true"></span> View Code
+                <span class="oi oi-code d-none d-sm-block" aria-hidden="true"></span> View Code
             </NavLink>
         </li>
         <li class="nav-item px-3">
             <NavLink class="nav-link cursor-pointer" @onclick="(() => OnClick.InvokeAsync(true))">
-                <span class="oi oi-bug" aria-hidden="true"></span> Report a Bug
+                <span class="oi oi-bug d-none d-sm-block" aria-hidden="true"></span> Report a Bug
             </NavLink>
         </li>
         @if (isAdmin)
