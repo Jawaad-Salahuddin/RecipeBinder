@@ -34,6 +34,7 @@ namespace RecipeBinder
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddRazorPages();
             services.AddServerSideBlazor();
+            services.AddSignalR().AddAzureSignalR();
             services.AddMvc();
             services.AddAuthentication()
                 .AddGoogle(options =>
