@@ -51,8 +51,7 @@ else
     {
         AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         user = authState.User.Identity.Name;
-        List<string> admin = configuration.GetSection("Admin").Get<List<string>>();
-        isAdmin = admin.Contains(user);
+        isAdmin = user == configuration["Admin"];
         bugs = await BugService.FetchAsync();
         foreach (Bug bug in bugs)
         {

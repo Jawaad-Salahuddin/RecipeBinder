@@ -129,8 +129,7 @@ else
         recipe = await RecipeService.GetAsync(Id);
         AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         user = authState.User.Identity.Name;
-        List<string> admin = configuration.GetSection("Admin").Get<List<string>>();
-        isAdmin = admin.Contains(user);
+        isAdmin = user == configuration["Admin"];
         canView = !recipe.Restricted || user == recipe.Owner || recipe.Readers.Any(u => user == u.Email);
         canEdit = user == recipe.Owner || recipe.Readers.Where(u => u.Editor).Any(u => user == u.Email);
         liked = recipe.Likes.Any(l => user == l.Email) ? true : false;
