@@ -69,7 +69,6 @@
     {
         AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         user = authState.User.Identity.Name;
-        List<string> admin = configuration.GetSection("Admin").Get<List<string>>();
-        if (admin.Contains(user)) isAdmin = true;
+        isAdmin = user == configuration["Admin"];
     }
 }
